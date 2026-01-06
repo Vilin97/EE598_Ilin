@@ -37,13 +37,16 @@ def square_list (L : List ℕ) : List ℕ := match L with
 
 #eval square_list [0,1,2,3]
 
-def euclidean_alg (n m : ℕ) : ℕ :=
-  if h : m = 0 then n else euclidean_alg m (n % m)
+def my_gcd (n m : ℕ) : ℕ :=
+  if h : m = 0 then n else my_gcd m (n % m)
   termination_by m
   decreasing_by
     exact Nat.mod_lt n (Nat.pos_of_ne_zero h)
 
-
+#eval my_gcd 48 18
+#eval my_gcd 123456 789012 = gcd 123456 789012
+#eval my_gcd 100 0
+#eval gcd 100 0
 
 example (n m : ℕ) (h : ¬m = 0) : n % m < m := by
   exact Nat.mod_lt n (Nat.pos_of_ne_zero h)
