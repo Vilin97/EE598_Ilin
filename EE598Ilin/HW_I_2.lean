@@ -43,6 +43,8 @@ def euclidean_alg (n m : ℕ) : ℕ :=
   decreasing_by
     exact Nat.mod_lt n (Nat.pos_of_ne_zero h)
 
+
+
 example (n m : ℕ) (h : ¬m = 0) : n % m < m := by
   exact Nat.mod_lt n (Nat.pos_of_ne_zero h)
 
