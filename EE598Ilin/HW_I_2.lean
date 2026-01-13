@@ -167,11 +167,25 @@ def do_n (n : ℕ) (f : α → α) (x : α) := match n with
 def fib_step : ℕ × ℕ → ℕ × ℕ := fun (n,m) => (m, n+m)
 def fib' (n : ℕ) := (do_n n fib_step (1,1)).1
 
-example : fib' 6 = fib' 6 := by
-  unfold fib'
-  unfold do_n
-  unfold fib_step
+def fibAux (n : ℕ) (a b : ℕ) : ℕ := match n with
+  | 0 => a
+  | k+1 => fibAux k b (a+b)
+def fib'' (n : ℕ) := fibAux n 1 1
+#eval fib'' 5
+
+#eval fib 30
+#eval fib'' 70000
+
+example : fib 6 = fib 6 := by
   unfold fib
+  unfold fib
+  unfold fib
+  sorry
+
+example : fib'' 6 = fib'' 6 := by
+  unfold fib''
+  unfold fibAux
+  unfold fibAux
   sorry
 
 -- Ex 5
