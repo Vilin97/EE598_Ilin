@@ -190,3 +190,192 @@ example : fib'' 6 = fib'' 6 := by
 
 -- Ex 5
 def mediant (x y : ℚ) := (x.num + y.num) / (x.den + y.den)
+
+-- lecture 3
+inductive MyNat where
+  | zero : MyNat
+  | succ : MyNat → MyNat
+
+#check MyNat.zero
+#check MyNat.succ
+#check MyNat.succ MyNat.zero
+
+inductive MyNat' where
+  | zero : MyNat'
+  | succ (n : MyNat') : MyNat'
+
+inductive MyComplex where
+  | mk (re : ℝ) (im : ℝ) : MyComplex
+
+def MyComplex.re (z : MyComplex) : ℝ :=
+  match z with
+  | MyComplex.mk re im => re
+
+inductive TriBool where
+  | T : TriBool
+  | F : TriBool
+  | U : TriBool -- undefined
+
+open TriBool
+
+def and (A B : TriBool) :=
+  match A, B with
+  | T, T => T
+  | T, F => F
+  | F, T => F
+  | F, F => F
+  | _, _ => U
+
+def first (L : List α) : Option α :=
+  match L with
+  | [] => Option.none
+  | x::_ => x -- x is coerced from α to Option α via x ↦ Option.some x
+
+#eval first ([] : List ℕ)
+#eval first [1]
+
+def first_plus_one (L : List ℕ) : Option ℕ :=
+  let x := first L
+  match x with
+  | .none => .none
+  | .some n => n + (1:ℕ)
+
+-- Ex 1
+inductive polarComplex where
+  | mk (r : ℝ) (θ : ℝ) : polarComplex
+
+inductive BTree (α : Type) where
+  | leaf (v : α) : BTree α
+  | node (v : α) (left : BTree α) (right : BTree α) : BTree α
+
+namespace BTree
+#check leaf 1
+#check node 1 (leaf 0) (leaf 2)
+
+def my_tree := node 1 (leaf 2) (node 3 (leaf 4) (leaf 5))
+
+#eval my_tree
+
+def to_str [h : ToString α] (T : BTree α) :=
+  match T with
+  | leaf a => toString a
+  | node a L R => "(" ++ toString a ++ " " ++ to_str L ++ " " ++ to_str R ++ ")"
+
+#eval to_str my_tree
+
+instance [Repr α] [ToString α] : Repr (BTree α) := {
+  reprPrec := fun T _ => to_str T
+}
+
+#eval my_tree
+
+-- Ex 4
+def swap (T : BTree α) : BTree α :=
+  match T with
+  | leaf v => leaf v
+  | node v L R => node v (swap R) (swap L)
+
+#eval swap my_tree
+
+end BTree
+
+-- mutual induction
+mutual
+  inductive Ev where
+  | zero : Ev
+  | succ : Od → Ev
+
+  inductive Od where
+  | succ : Ev → Od
+end
+
+mutual
+    inductive Term
+    | var : String → Term
+    | num : ℕ → Term
+    | paren : Expr → Term
+
+    inductive Expr
+    | neg : Term → Expr
+    | add : Term → Term → Expr
+    | mul : Term → Term → Expr
+end
+
+open Expr Term
+
+def expr : Expr := mul (num 2) (paren (add (var "x") (num 1)))
+
+-- Ex 5, count additions in an expression
+mutual
+  def Term.CountAdds (t : Term) : ℕ :=
+    match t with
+    | var s => 0
+    | num n => 0
+    | paren e => e.CountAdds
+
+  def Expr.CountAdds (e : Expr) : ℕ :=
+    match e with
+    | neg t => t.CountAdds
+    | add t1 t2 => 1 + t1.CountAdds + t2.CountAdds
+    | mul t1 t2 => t1.CountAdds + t2.CountAdds
+end
+
+#eval expr.CountAdds
+
+-- structures
+-- this is syntactic sugar for `inductive MyComplex where | mk (re : ℝ) (im : ℝ) : MyComplex`
+structure Komplex where
+  re : Real
+  im : Real
+
+open Komplex
+
+def conj (x : Komplex) := Komplex.mk x.re (-x.im)
+
+-- several ways to unpack data from a structure
+def negate1 (x : Komplex) : Komplex :=
+  match x with | mk a b => ⟨ -a, -b ⟩
+
+def negate2 (x : Komplex) : Komplex :=
+  match x with | ⟨ a, b ⟩ => ⟨ -a, -b ⟩
+
+def negate3 (x : Komplex) : Komplex :=
+  let ⟨ a, b ⟩ := x
+  ⟨ -a, -b ⟩
+
+def negate4 (x : Komplex) : Komplex := ⟨ -x.1, -x.2 ⟩
+
+-- fields in a structure can use previous fields
+structure Dyn where
+  α : Type
+  a : α
+
+structure Node where
+  label : String
+  next : Option Node
+
+def chain : Node := {
+    label := "a"
+    next := some { label := "b", next := none }
+}
+
+#eval chain
+#check ℕ × ℕ × ℕ
+
+-- Π types
+def Qn := Π _ : ℕ, ℚ
+-- dependent type
+def DPT := Π n : ℕ, Fin (n+1)
+def DPT' := (n : ℕ) → Fin (n+1)
+
+def σ1 : DPT := fun n => ⟨n, by lia⟩
+
+-- Ex 9
+def Shape := ℝ ⊕ (ℝ × ℝ)
+
+
+noncomputable
+def area (s : Shape) : ℝ :=
+  match s with
+  | .inl r => Real.pi * r*r
+  | .inr ⟨x, y⟩ => x * y
