@@ -379,3 +379,39 @@ def area (s : Shape) : ℝ :=
   match s with
   | .inl r => Real.pi * r*r
   | .inr ⟨x, y⟩ => x * y
+
+def MyNat.add (x y : MyNat) :=
+  match x with
+  | .zero => y
+  | .succ k => .succ (MyNat.add k y)
+
+def MyNat.add_twice (x y : MyNat) :=
+  match x with
+  | .zero => y
+  | .succ k => .succ (.succ (MyNat.add_twice k y))
+
+infix:65 " + " => MyNat.add
+infix:65 " ++ " => MyNat.add_twice
+
+-- NOTE: This does not work:
+-- #eval MyNat.zero.succ + MyNat.zero + MyNat.zero
+#eval MyNat.zero.succ ++ MyNat.zero
+-- #eval MyNat.zero.succ ++ MyNat.zero.succ + MyNat.zero
+
+-- Ex 13
+namespace Temp
+
+inductive Dyadic where
+  | zero    : Dyadic
+  | add_one : Dyadic → Dyadic  -- x ↦ x + 1
+  | half    : Dyadic → Dyadic  -- x ↦ x / 2
+  | neg     : Dyadic → Dyadic  -- x ↦ -x
+
+/-
+a. Define Dyadic.double that doubles a Dyadic.
+b. Define Dyadic.add that adds two Dyadic values.
+c. Define Dyadic.mul that multiplies two Dyadic values.
+d. Define a function Dyadic.to_rat that converts a Dyadic to a Rat.
+e. Define the Dyadics 5/8 and -7/32 and test your methods on these values.
+f. Are Dyadics as defined here unique? Why or why not?
+-/
