@@ -94,3 +94,112 @@ def f_fun' : (b : Bool) → chooseType b := fun (b : Bool) =>
   match b with
   | true => (0 : Nat)
   | false => ""
+
+end lecture5
+
+-- lecture 6
+namespace lecture6
+
+inductive A (n : Nat) : Type u where
+  | a : A n
+
+inductive B : Nat → Type u where
+  | a : B n
+
+#check A.rec
+#check B.rec
+
+-- ex 5
+#check List.recOn
+
+def length {α} (L : List α) : Nat :=
+  List.recOn L 0 (fun h t mt => 1 + mt)
+
+-- typeclasses
+class Zero (α : Type) where
+  zero : α
+
+class Add (α : Type) where
+  add : α → α → α
+
+def sum {α : Type} (f : ℕ → α) (n : ℕ) [hz : Zero α] [ha : Add α] :=
+  match n with
+  | .zero => hz.zero
+  | .succ k => ha.add (sum f k) (f n)
+
+instance : Zero String where
+  zero := ""
+
+instance : Add String where
+  add a b := a ++ b
+
+#eval sum (fun n => String.singleton (Char.ofNat (n+96))) 26
+
+#check (Add, Sub, Mul, Mod, Div, LT, LE)
+#check (HAdd, HSub, HMul, HDiv)
+#check Inhabited
+#check Ord
+#check LinearOrder
+#check Coe
+#check CommSemiring      -- adds theorems that interact with simplifier
+#check Countable         -- adds theorems
+
+inductive Dyadic where
+  | zero    : Dyadic
+  | add_one : Dyadic → Dyadic  -- x ↦ x + 1
+  | half    : Dyadic → Dyadic  -- x ↦ x / 2
+  | neg     : Dyadic → Dyadic  -- x ↦ -x
+
+open Dyadic
+
+def toRat (a : Dyadic) : Rat :=
+  match a with
+  | .zero => 0
+  | .add_one a' => 1 + toRat a'
+  | .half a' => (toRat a') / 2
+  | .neg a' => -(toRat a')
+
+def double (a : Dyadic) :=
+  match a with
+  | .zero => zero
+  | .add_one a' => add_one (add_one (double a'))
+  | .half a' => a'
+  | .neg a' => neg (double a')
+
+-- half: a'/2 + b = (a' + 2b)/2
+-- neg : -a + b = -(a + (-b))
+def add (a b : Dyadic) :=
+  match a with
+  | zero => b
+  | add_one a' => add a' (add_one b)
+  | half a' => half (add a' (double b))
+  | neg a' => neg (add a' (neg b))
+
+instance : Zero Dyadic where
+  zero := zero
+
+instance : One Dyadic where
+  one := add_one zero
+
+instance : Add Dyadic where
+  add := add
+
+instance : HAdd Dyadic Dyadic Dyadic where
+  hAdd := add
+
+def x := add_one zero
+def y := neg (half (add_one zero))
+def z := add_one (add_one (neg (half (add_one zero))))
+
+#eval toRat x
+#eval toRat y
+#eval toRat z
+
+#eval toRat (x + y)
+#eval toRat (x + z)
+
+#eval toRat (x + y) = (toRat x) + (toRat y)
+#eval toRat (x + z) = (toRat x) + (toRat z)
+#eval toRat (y + z) = (toRat y) + (toRat z)
+
+end lecture6
