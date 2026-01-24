@@ -152,54 +152,94 @@ inductive Dyadic where
 
 open Dyadic
 
-def toRat (a : Dyadic) : Rat :=
-  match a with
+def double (y : Dyadic) :=
+  match y with
+    | .zero => zero
+    | .add_one y' => add_one (add_one (double y'))
+    | .half y' => y'
+    | .neg y' => neg (double y')
+
+-- x/2 + y = (x + y+y)/2
+-- -x + y = -(x + -y)
+def add (x y : Dyadic) :=
+  match x with
+  | zero => y
+  | add_one x' => add x' (add_one y)
+  | half x' => half (add x' (double y))
+  | neg x' => neg (add x' (neg y))
+
+def Dyadic.to_rat (x : Dyadic) : Rat :=
+  match x with
   | .zero => 0
-  | .add_one a' => 1 + toRat a'
-  | .half a' => (toRat a') / 2
-  | .neg a' => -(toRat a')
+  | .add_one x' => 1 + x'.to_rat
+  | .half x' => x'.to_rat / 2
+  | .neg x' => -x'.to_rat
 
-def double (a : Dyadic) :=
-  match a with
+lemma to_rat_double (y : Dyadic) : (double y).to_rat = 2 * y.to_rat :=
+  match y with
+  | .zero => by simp [double, to_rat]
+  | .add_one y' => by simp [double, to_rat, to_rat_double]; ring
+  | .half y' => by simp [double, to_rat]; ring
+  | .neg y' => by simp [double, to_rat, to_rat_double]
+
+theorem to_rat_add (x y : Dyadic) : (add x y).to_rat = x.to_rat + y.to_rat :=
+  match x with
+  | .zero => by simp [add, to_rat]
+  | .add_one x' => by rw [add, to_rat, to_rat_add, to_rat]; ring
+  | .half x' => by rw [add, to_rat, to_rat_add, to_rat, to_rat_double]; ring
+  | .neg x' => by simp [add, to_rat, to_rat_add, to_rat]; ring
+
+def x := half (add_one zero) -- 1/2
+def y := neg (add_one (add_one zero)) -- -2
+
+#eval (add x y).to_rat = x.to_rat + y.to_rat
+
+-- 0 * y = 0
+-- (1 + x) * y = y + x * y
+-- (x/2) * y = (x*y)/2
+-- -x * y = - (x*y)
+def Dyadic.mul (x y : Dyadic) :=
+  match x with
   | .zero => zero
-  | .add_one a' => add_one (add_one (double a'))
-  | .half a' => a'
-  | .neg a' => neg (double a')
+  | .add_one x' => add y (mul x' y)
+  | .half x' => half (mul x' y)
+  | .neg x' => neg (mul x' y)
 
--- half: a'/2 + b = (a' + 2b)/2
--- neg : -a + b = -(a + (-b))
-def add (a b : Dyadic) :=
-  match a with
-  | zero => b
-  | add_one a' => add a' (add_one b)
-  | half a' => half (add a' (double b))
-  | neg a' => neg (add a' (neg b))
+theorem to_rat_mul (x y : Dyadic) : (mul x y).to_rat = x.to_rat * y.to_rat :=
+  match x with
+  | .zero => by simp [mul, to_rat]
+  | .add_one x' => by rw [mul, to_rat, to_rat_add, to_rat_mul]; ring
+  | .half x' => by rw [mul, to_rat, to_rat_mul, to_rat]; ring
+  | .neg x' => by simp [mul, to_rat, to_rat_mul, to_rat]
 
-instance : Zero Dyadic where
-  zero := zero
+#eval (mul x y).to_rat = x.to_rat * y.to_rat
 
-instance : One Dyadic where
-  one := add_one zero
 
-instance : Add Dyadic where
-  add := add
+-- instance : Zero Dyadic where
+--   zero := zero
 
-instance : HAdd Dyadic Dyadic Dyadic where
-  hAdd := add
+-- instance : One Dyadic where
+--   one := add_one zero
 
-def x := add_one zero
-def y := neg (half (add_one zero))
-def z := add_one (add_one (neg (half (add_one zero))))
+-- instance : Add Dyadic where
+--   add := add
 
-#eval toRat x
-#eval toRat y
-#eval toRat z
+-- instance : HAdd Dyadic Dyadic Dyadic where
+--   hAdd := add
 
-#eval toRat (x + y)
-#eval toRat (x + z)
+-- def x := add_one zero
+-- def y := neg (half (add_one zero))
+-- def z := add_one (add_one (neg (half (add_one zero))))
 
-#eval toRat (x + y) = (toRat x) + (toRat y)
-#eval toRat (x + z) = (toRat x) + (toRat z)
-#eval toRat (y + z) = (toRat y) + (toRat z)
+-- #eval toRat x
+-- #eval toRat y
+-- #eval toRat z
+
+-- #eval toRat (x + y)
+-- #eval toRat (x + z)
+
+-- #eval toRat (x + y) = (toRat x) + (toRat y)
+-- #eval toRat (x + z) = (toRat x) + (toRat z)
+-- #eval toRat (y + z) = (toRat y) + (toRat z)
 
 end lecture6
