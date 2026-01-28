@@ -243,3 +243,30 @@ theorem to_rat_mul (x y : Dyadic) : (mul x y).to_rat = x.to_rat * y.to_rat :=
 -- #eval toRat (y + z) = (toRat y) + (toRat z)
 
 end lecture6
+
+
+-- the talk by Leo de Moura
+namespace LeoDeMoura
+
+open Real
+example : (cos x + sin x)^2 = 2*(cos x)*(sin x) + 1 := by
+--   try?
+--   grind +suggestions
+  grind =>
+    instantiate only [!cos_sq_add_sin_sq]
+    ring
+
+-- Notes:
+-- new professor coming to UW, using Lean. name: Andres or Andrei
+-- Lean radar to measure compilation times: https://radar.lean-lang.org/repos/lean4
+-- Manual reference on grind: https://lean-lang.org/doc/reference/4.28.0-rc1/The--grind--tactic/#grind-tactic
+-- Lean kernel arena: https://arena.lean-lang.org/
+
+-- questions:
+-- is Lean AI? Yes
+-- name of the new UW professor? Andres ramsom
+-- the link points to all PRs by leodemoura
+-- grind does not seem to add `cos_sq_add_sin_sq` to the context automatically. and `try?` also does not work.
+-- is there money in math verification, irrespective of code verification?
+
+end LeoDeMoura
