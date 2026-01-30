@@ -50,8 +50,13 @@ variable (P Q : Prop)
 
 example : P → P → P → P := fun p _ _ => p
 example : (P → Q) → (¬Q → ¬P) := fun fpq notq p => notq (fpq p)
+example : (P → Q) → (¬Q → ¬P) := fun fpq notq p => notq (fpq p)
 example : ¬p → (p → q) := fun notp p => nomatch notp p
+example : ¬p → (p → q) := (nomatch · ·)
 example : (∀ x, x > 0) → (∀ y, y > 0) := fun p => p
+example : (∀ x, x > 0) → (∀ y, y > 0) := (·)
+
+def f : ℕ → ℕ := (·^2)
 
 #check And
 
