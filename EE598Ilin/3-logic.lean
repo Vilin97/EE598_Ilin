@@ -45,6 +45,7 @@ example {P : Prop} (p1 p2 : P) : p1 = p2 := rfl
 
 -- does this have a name?
 example : (p → q) → p → q := fun f => f
+example : (p → q) → p → q := (·)
 
 variable (P Q : Prop)
 
@@ -65,5 +66,27 @@ inductive And' (φ ψ : Prop) : Prop where
 
 example (p q : Prop) : p → q → And' p q := And'.intro
 example (p q : Prop) : p → q → And p q := And.intro
+
+example : ((p → q) → p) → p := by
+  rcases Classical.em p with hp | hnp
+  · exact fun _ => hp
+  · exact (· (nomatch hnp ·))
+
+example {p : Prop} : ((p → q) → p) → p :=
+  match Classical.em p with
+  | Or.inl hp => fun _ => hp
+  | Or.inr hnp => (· (nomatch hnp ·))
+
+example {p : Prop} : ((p → q) → p) → p :=
+  fun h => (Or.recOn (Classical.em p) (fun hp => hp) (fun hnp => h (fun hp => nomatch hnp hp)))
+
+example {p : Prop} : ((p → q) → p) → p :=
+  fun h => (Or.recOn (Classical.em p) (·) (fun hnp => h (fun hp => nomatch hnp hp)))
+
+example {p : Prop} : ((p → q) → p) → p :=
+  fun h => (Or.recOn (Classical.em p) (·) (h fun hp => nomatch · hp))
+
+example {p : Prop} : ((p → q) → p) → p :=
+  fun h => (Or.recOn (Classical.em p) (·) (fun hnp => h (nomatch hnp ·)))
 
 end lecture8

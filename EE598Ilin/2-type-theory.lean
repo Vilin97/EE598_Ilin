@@ -57,6 +57,9 @@ def c₃ := fun ( f : α → α ) => fun x => f (f (f x))
 #check c₂
 def N := (α → α) → α → α -- the type of Church numerals
 
+def sub_one (a : N) : N :=
+  fun f => fun x => a f x
+
 -- ex 5
 def double (a : N) : N := fun f => fun x => a f (a f x)
 #reduce double c₂
