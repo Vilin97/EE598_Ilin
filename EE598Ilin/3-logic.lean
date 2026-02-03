@@ -162,6 +162,8 @@ example : on_left mary jolin := by
   unfold on_left on_right
   exact Eq.refl mary
 
-example : on_left mary jolin := Eq.refl mary
+example : on_left mary jolin := Eq.refl _
+
+#check rfl
 
 end lecture9
