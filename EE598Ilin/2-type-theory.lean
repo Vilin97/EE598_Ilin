@@ -217,6 +217,34 @@ theorem to_rat_mul (x y : Dyadic) : (mul x y).to_rat = x.to_rat * y.to_rat :=
 
 #eval (mul x y).to_rat = x.to_rat * y.to_rat
 
+-- True when x has no neg constructors used to define it.
+def negs (x : Dyadic) : Prop :=
+  match x with
+  | .zero => False
+  | .add_one y => negs y
+  | .half y => negs y
+  | .neg _ => True
+
+def no_negs (x : Dyadic) : Prop := ¬negs x
+
+instance instNegsDecidable (x : Dyadic) : Decidable (negs x) :=
+  match x with
+  | .zero => Decidable.isFalse (fun h => nomatch h)
+  | .add_one x' => instNegsDecidable x'
+  | .half x' => instNegsDecidable x'
+  | .neg _ => Decidable.isTrue trivial
+
+#eval y
+set_option diagnostics true in
+#eval negs y
+
+theorem neg_double (x : Dyadic) : negs x → negs (double x) :=
+  fun h =>
+    match x with
+    | .zero => h
+    | .add_one x' => neg_double x' h
+    | .half _ => h
+    | .neg _ => h
 
 -- instance : Zero Dyadic where
 --   zero := zero
