@@ -246,6 +246,23 @@ theorem neg_double (x : Dyadic) : negs x → negs (double x) :=
     | .half _ => h
     | .neg _ => h
 
+theorem no_negs_double (x : Dyadic) : no_negs x → no_negs (double x) := by
+  cases x with
+  | zero => exact (·)
+  | add_one x' => exact no_negs_double x'
+  | half x' => exact fun h => h
+  | neg x' => exact fun h => by rw[no_negs, negs] at h; nomatch h
+
+example (x : Dyadic) : no_negs x → no_negs (double x) :=
+  Dyadic.recOn x
+    (·)
+    (fun x' h => h)
+    (fun x' h h' => h')
+    (fun x' h h' => by rw[no_negs, negs] at h'; nomatch h')
+
+
+
+
 -- instance : Zero Dyadic where
 --   zero := zero
 

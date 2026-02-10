@@ -245,3 +245,185 @@ example : (∃ x, p x ∨ q x) ↔ (∃ x, p x) ∨ (∃ x, q x) :=
 #help tactic
 
 end lecture10
+
+namespace lecture11
+
+-- `reduce` tactic will beta-reduce
+example : 9 = (3*(2+1)) := by
+  reduce
+  rfl
+  -- apply Eq.refl
+
+#check Eq.refl
+#check Eq.subst
+
+universe u
+
+inductive MyEq {α : Sort u} : α → α → Prop where
+  | refl a : MyEq a a
+
+infix:50 " ~ "  => MyEq
+
+theorem MyEq.subst {α : Sort u} {P : α → Prop} {a b : α}
+                   (h₁ : a ~ b) (h₂ : P a) : P b := by
+  cases h₁ with
+  | refl => exact h₂
+
+theorem MyEq.congr_arg {α : Sort u} {a b : α} {f : α → α} : a ~ b → f a ~ f b := by
+  intro hab
+  apply MyEq.subst hab
+  exact MyEq.refl (f a)
+
+example (x y : Nat) : x ~ y → 2*x+1 ~ 2*y + 1 :=
+  fun h => MyEq.congr_arg (f := fun w => 2*w + 1) h
+
+example (x y : Nat) (f := fun w => 2 * w + 1) : x ~ y → f x ~ f y :=
+  fun h => MyEq.congr_arg h
+
+theorem MyEq.to_iff (a b : Prop) : a ~ b → (a ↔ b) := by
+  intro h
+  cases h with
+  | refl => rfl
+
+example {a : Prop} : a ↔ a := Eq.to_iff rfl
+example {a : Prop} : a ↔ a := Iff.of_eq rfl
+example {a : Prop} : a = a := id_eq a
+example {a : Prop} : a ↔ a := (id_eq a) ▸ Iff.rfl
+example {a : Prop} : a ↔ a := Iff.rfl
+
+theorem MyEq.to_iff' (a b : Prop) : a ~ b → (a ↔ b) := by
+  intro h
+  have : a ↔ a := Eq.to_iff rfl
+  exact MyEq.subst h this
+
+theorem MyEq.to_iff'' (a b : Prop) : a ~ b → (a ↔ b) := fun h => MyEq.subst h Iff.rfl
+
+example (P : Type → Prop) : ∀ x y, x = y → P x → ∃ z, P z := sorry
+
+inductive Spin where | up | dn
+open Spin
+
+def Spin.toggle : Spin → Spin
+  | up => dn
+  | dn => up
+
+postfix:95 " ⁻¹ " => toggle
+
+#eval up⁻¹
+
+@[simp] theorem toggle_up : up⁻¹ = dn := rfl
+@[simp] theorem toggle_dn : dn⁻¹ = up := rfl
+
+@[simp] theorem toggle_toggle {x} : x⁻¹⁻¹ = x := by
+  cases x <;> simp  -- uses toggle_up, toggle_dn
+
+@[simp] theorem toggle_toggle_toggle {x} :  x⁻¹⁻¹⁻¹ = x⁻¹ := by
+  simp  -- uses toggle_up, toggle_dn
+
+def op (x y : Spin) : Spin := match x, y with
+  | up,dn => dn
+  | dn,up => dn
+  | _,_ => up
+
+infix:75 " o " => op
+
+@[simp] theorem op_up_left {x} : up o x = x := by cases x <;> rfl
+@[simp] theorem op_up_right {x} : x o up = x := by cases x <;> rfl
+@[simp] theorem op_dn_left {x} : dn o x = x⁻¹ := by cases x <;> rfl
+@[simp] theorem op_dn_right {x} : x o dn = x⁻¹ := by cases x <;> rfl
+
+@[simp] theorem toggle_op_left {x y} : (x o y)⁻¹ = x⁻¹ o y := by
+  cases x <;> simp
+
+#check mul_assoc
+
+theorem assoc {x y z} : x o (y o z) = (x o y) o z := by cases x <;> simp
+
+theorem com {x y} : x o y = y o x := by cases x <;> simp
+
+theorem toggle_op_right {x y} : (x o y)⁻¹ = y o x⁻¹ := by cases x <;> simp
+
+@[simp]
+theorem inv_cancel_right {x} : x o x⁻¹ = dn := by cases x <;> simp
+
+@[simp]
+theorem inv_cancel_left {x} : x⁻¹ o x = dn := by cases x <;> simp
+
+def S (n : Nat) : Nat := match n with
+  | Nat.zero => 0
+  | Nat.succ x => n + S x
+
+example : ∀ n, 2 * S n = n*(n+1) := by
+  intro n
+  induction n with
+  | zero => simp[S]
+  | succ k ih =>
+    simp[S]
+    linarith         -- uses ih (check with clear ih before linarith)
+
+theorem easy1 : S 0 = 0 := by simp[S]
+theorem easy2 : S 0 = 0 := rfl
+#print easy1
+#print easy2
+
+def T (n : Nat) : Nat := match n with
+  | Nat.zero => 0
+  | Nat.succ x => n*n + T x
+
+example (n : ℕ) : 6 * (T n) = n * (n+1) * (2*n+1) := by
+  induction n with
+  | zero => simp[T]
+  | succ m ih => grind[T]
+
+example : up ≠ dn := by
+  intro h
+  nomatch h
+
+inductive PreDyadic where
+  | zero    : PreDyadic
+  | add_one : PreDyadic → PreDyadic  -- x ↦ x + 1
+  | half    : PreDyadic → PreDyadic  -- x ↦ x / 2
+  | neg     : PreDyadic → PreDyadic  -- x ↦ -x
+
+open PreDyadic
+
+example (x : PreDyadic) : zero ≠ add_one x := fun h => nomatch h
+example (x : PreDyadic) : zero ≠ add_one x := PreDyadic.noConfusion
+example : ¬zero.add_one = zero.add_one.add_one.half := fun h => nomatch h
+example : ¬zero.add_one = zero.add_one.add_one.half := PreDyadic.noConfusion
+
+example (x y : PreDyadic) : add_one x = add_one y ↔ x = y := by
+  constructor
+  · intro h
+    cases x <;> cases y <;> simp_all
+  · intro h
+    rw[h]
+
+example (x y : PreDyadic) : add_one x = add_one y ↔ x = y :=
+  ⟨fun h => by cases x <;> cases y <;> simp_all, fun h => congrArg add_one h⟩
+
+structure Point (α : Type u) where
+  x : α
+  y : α
+
+theorem Point.ext {α : Type} (p q : Point α) (hx : p.x = q.x) (hy : p.y = q.y)
+  : p = q := by
+  cases p; cases q;
+  cases hx; cases hy;
+  rfl
+
+def shift (k x : ℤ) : ℤ := x+k
+
+#check funext
+
+@[simp]
+theorem shift_inv_right {k} : shift k ∘ shift (-k) = id := by
+  funext x              -- x : ℤ ⊢ (shift k ∘ shift (-k)) x = id x
+  simp[shift]
+
+@[simp]
+theorem shift_inv_left {k} : shift (-k) ∘ shift k = id := by
+  funext x
+  simp[shift]
+
+end lecture11
