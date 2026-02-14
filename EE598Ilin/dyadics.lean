@@ -66,13 +66,14 @@ def Dyadic.to_rat (x : Dyadic) : Rat :=
   | .half x' => x'.to_rat / 2
   | .neg x' => -x'.to_rat
 
+def Dyadic.repr : Dyadic → Std.Format
+  | .zero => "zero"
+  | .add_one x => "add_one (" ++ x.repr ++ ")"
+  | .half x => "half (" ++ x.repr ++ ")"
+  | .neg x => "neg (" ++ x.repr ++ ")"
+
 instance : Repr Dyadic where
-  reprPrec d _ :=
-    let r := d.to_rat
-    if r.den == 1 then
-      repr r.num
-    else
-      repr r.num ++ "/" ++ repr r.den
+  reprPrec d _ := d.repr
 
 lemma to_rat_double (y : Dyadic) : (double y).to_rat = 2 * y.to_rat :=
   match y with
@@ -91,6 +92,26 @@ theorem to_rat_add (x y : Dyadic) : (add x y).to_rat = x.to_rat + y.to_rat :=
 def x := half (add_one zero) -- 1/2
 def y := neg (add_one (add_one zero)) -- -2
 
+def ack : Nat → Nat → Nat
+  | 0,   y   => y+1
+  | x+1, 0   => ack x 1
+  | x+1, y+1 => ack x (ack (x+1) y)
+termination_by x y => (x, y)
+
+def num_half (x : Dyadic) : ℕ :=
+  match x with
+  | .zero => 0
+  | .add_one y => num_half y
+  | .half y => 1 + num_half y
+  | .neg y => num_half y
+
+def num_constr (x : Dyadic) : ℕ :=
+  match x with
+  | .zero => 0
+  | .add_one y => 1 + num_constr y
+  | .half y => 1 + num_constr y
+  | .neg y => 1 + num_constr y
+
 -- y/2 - 1 = (y-2)/2
 -- -y - 1 = -(y+1)
 -- partial
@@ -99,17 +120,16 @@ def sub_one (x : Dyadic) :=
   | .zero => neg (add_one zero)
   | .add_one y => y
   | .half y => half (add y (neg (add_one (add_one zero))))
-  -- | .half y => half (sub_one (sub_one y)) -- y / 2 - 1 = (y - 1 - 1) / 2
   | .neg y => neg (add_one y)
 
 def x0 := zero
 def x1 := half zero
 def x2 := half (half zero)
+#eval x0
 #eval x1
-#eval x1.to_rat
-#eval (sub_one x0).to_rat
-#eval (sub_one x1).to_rat
-#eval (sub_one x2).to_rat
+#eval (sub_one x0)
+#eval (sub_one x1)
+#eval (sub_one x2)
 
 lemma sub_add (x : Dyadic) : sub_one (add_one x) = x := by
   rfl
@@ -182,6 +202,8 @@ example (x : Dyadic) : no_negs x → no_negs (double x) :=
     (fun x' h h' => h')
     (fun x' h h' => by rw[no_negs, negs] at h'; nomatch h')
 
-
+example : double ∘ half = id := by
+  ext x
+  rfl
 
 end dyadic
