@@ -78,6 +78,91 @@ instance Group.prod [Group G] [Group H] : Group (G × H) := {
   id_left := by simp[id_left]
 }
 
-
-
 end lecture12
+
+namespace lecture13
+
+inductive Spin where | up | dn
+open Spin
+
+def Spin.toggle : Spin → Spin
+  | up => dn
+  | dn => up
+
+def Spin.neg : Spin → Spin
+  | up => up
+  | dn => dn
+
+def op (x y : Spin) : Spin := match x, y with
+  | up,dn => dn
+  | dn,up => dn
+  | _,_ => up
+
+def Spin.mul (a b : Spin) : Spin :=
+  match a, b with
+  | dn, dn => dn
+  | _, _ => up
+
+instance Spin.Zero : Zero Spin := {
+  zero := up
+}
+instance Spin.Add : Add Spin := {
+  add := op
+}
+
+instance AddMonoid : AddMonoid Spin := {
+  add := op
+  add_assoc := by intro a b c; cases a <;> cases b <;> cases c <;> rfl
+  zero_add := by intro a; cases a <;> rfl
+  add_zero := by intro a; cases a <;> rfl
+  nsmul := nsmulRec
+}
+
+instance NegMonoid : Neg Spin := {
+  neg := neg
+}
+
+instance Spin.inst_ring : Ring Spin := {
+  add_comm := by intro a b; cases a <;> cases b <;> rfl
+  mul := mul
+  left_distrib := by intro a b c; cases a <;> cases b <;> cases c <;> rfl
+  right_distrib := by intro a b c; cases a <;> cases b <;> cases c <;> rfl
+  zero_mul := by intro a; cases a <;> rfl
+  mul_zero := by intro a; cases a <;> rfl
+  mul_assoc := by intro a b c; cases a <;> cases b <;> cases c <;> rfl
+  one := dn
+  one_mul := by intro a; cases a <;> rfl
+  mul_one := by intro a; cases a <;> rfl
+  zsmul := zsmulRec
+  neg_add_cancel := by intro a; cases a <;> rfl
+}
+
+theorem factor_mul_inv_right {x y : Spin} : x*(-y) = -(x*y) := by simp
+example (x y : Spin) : x*y + x = x*(y+dn) := by
+  cases x <;> cases y <;> exact rfl
+
+instance Seq.inst_ring {R : Type u} [Ring R] : Ring (ℕ → R) := inferInstance
+instance Seq.inst_group {R : Type u} [CommRing R] : CommRing (ℕ → R) := inferInstance
+
+#check Ideal
+#check NNReal
+#check Subgroup
+
+def Evens := Subtype (fun n => ∃ k, n = 2*k)
+def Evens.add (x y : Evens) : Evens := ⟨x.1+y.1, by
+  rcases x.2 with ⟨x', hx⟩
+  rcases y.2 with ⟨y', hy⟩
+  use x'+y'
+  simp[hx,hy]
+  ring⟩
+
+def x : Fin 10 := 1
+def y : Fin 10 := 2
+#eval x+10*y
+#eval (10:Fin 10)
+
+def R : Finset ℚ := {1/2, 1/4, 1/8, 1/16}
+#eval insert (4:ℚ) (insert (-4:ℚ) R)       --  {-4,-3,-2,-1,0,1,2,3,4}
+
+
+end lecture13
