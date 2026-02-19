@@ -166,3 +166,67 @@ def R : Finset ℚ := {1/2, 1/4, 1/8, 1/16}
 
 
 end lecture13
+
+namespace lecture14
+#check True < False
+#check List.lt
+
+def te (σ₁ σ₂ : ℕ → α) : Prop := ∃ m, ∀ n > m, σ₁ n = σ₂ n
+
+def Refl (R : α → α → Prop) := ∀ x, R x x
+
+example :  Refl (Eq (α := α))         := fun _ => rfl
+example :  Refl (te (α := α))         := fun _ => ⟨ 0, fun _ _ => rfl ⟩
+
+example [hl : LT β] : ¬Refl (List.lt (α := β)) :=
+  fun h => by simpa using (h [])
+
+example [Preorder β] : Refl (List.le (α := β)) := by
+  intro l
+  induction l with
+  | nil => exact List.not_lt_nil []
+  | cons head tail ih =>
+    intro h
+    cases h with
+    | rel h => exact (lt_self_iff_false head).mp h
+    | cons h => exact ih h
+
+example [Preorder β] : Refl (List.le (α := β)) := List.le_refl
+
+-- quotients
+def M (x y : ℤ) : Prop := ∃ k, x - y = 2*k
+
+instance m_equiv : Equivalence M := {
+  refl x        := by use 0; simp,
+  symm {x y}    := by intro ⟨ k, hm ⟩; use -k; linarith,
+  trans {x y z} := by intro ⟨ k, hk ⟩ ⟨ j, hj ⟩; use (k+j); linarith
+}
+
+instance m_setoid : Setoid ℤ := ⟨ M, m_equiv ⟩
+
+abbrev Z2 := Quotient m_setoid
+
+instance m_zero : Zero Z2 := ⟨ ⟦0⟧ ⟩
+
+#check ⟦0⟧
+#check ⟦2⟧
+example : (⟦0⟧:Z2) = ⟦2⟧ := by
+    apply Quotient.sound
+    use -1
+    simp
+
+def pre_neg (x : ℤ) : Z2 := ⟦-x⟧
+
+theorem pre_neg_respects : ∀ (a b : ℤ), a ≈ b → pre_neg a = pre_neg b := by
+  intro a b ⟨ k, hk ⟩
+  apply Quotient.sound
+  use -k
+  linarith
+
+def Z2.neg (X : Z2) : Z2 := Quotient.lift pre_neg pre_neg_respects X
+
+instance z2_neg : Neg Z2 := ⟨ Z2.neg ⟩
+
+#check -(⟦3⟧:Z2)
+
+end lecture14
